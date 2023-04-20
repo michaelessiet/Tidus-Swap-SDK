@@ -32,7 +32,11 @@ import {
   WRAPPED_ASSET,
 } from './utils/constants';
 import calculateFee, { calculateFeeWithDecimals } from './utils/feeCalculator';
-import { getAmountWithoutDecimals, getEtherWithoutDecimals, signPermit } from '.';
+import {
+  getAmountWithoutDecimals,
+  getEtherWithoutDecimals,
+  signPermit,
+} from '.';
 import axios from 'axios';
 import { formatEther } from '@ethersproject/units';
 
@@ -273,7 +277,7 @@ export const getQuote = async (
     return quote as QuoteError;
   }
 
-  let result: Quote
+  let result: Quote;
 
   if (sellTokenAddress === ETH_ADDRESS) {
     result = {
@@ -290,9 +294,7 @@ export const getQuote = async (
         undefined,
         buyTokenAddress
       ),
-      formattedSellAmount: getEtherWithoutDecimals(
-        quote.sellAmount,
-      ),
+      formattedSellAmount: getEtherWithoutDecimals(quote.sellAmount),
     };
   }
 
@@ -306,9 +308,7 @@ export const getQuote = async (
         sellTokenDecimals,
         (quote as Quote).buyAmountInEth
       ),
-      formattedBuyAmount: getEtherWithoutDecimals(
-        quote.buyAmount,
-      ),
+      formattedBuyAmount: getEtherWithoutDecimals(quote.buyAmount),
       formattedSellAmount: await getAmountWithoutDecimals(
         quote.sellAmount,
         undefined,
@@ -443,7 +443,7 @@ export const fillQuote = async (
       feeAmount,
       {
         ...transactionOptions,
-        value,
+        value: BigNumber.from(feeAmount).add(value ?? 0),
       }
     );
   } else if (buyTokenAddress?.toLowerCase() === ethAddressLowerCase) {
@@ -467,7 +467,7 @@ export const fillQuote = async (
         permitSignature,
         {
           ...transactionOptions,
-          value,
+          value: BigNumber.from(feeAmount).add(value ?? 0),
         }
       );
     } else {
@@ -479,7 +479,7 @@ export const fillQuote = async (
         feeAmount,
         {
           ...transactionOptions,
-          value,
+          value: BigNumber.from(feeAmount).add(value ?? 0),
         }
       );
     }
@@ -505,7 +505,7 @@ export const fillQuote = async (
         permitSignature,
         {
           ...transactionOptions,
-          value,
+          value: BigNumber.from(feeAmount).add(value ?? 0),
         }
       );
     } else {
@@ -518,7 +518,7 @@ export const fillQuote = async (
         sellAmount,
         {
           ...transactionOptions,
-          value,
+          value: BigNumber.from(feeAmount).add(value ?? 0),
         }
       );
     }
