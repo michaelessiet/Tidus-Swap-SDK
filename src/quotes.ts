@@ -1,9 +1,13 @@
 import { Signer } from '@ethersproject/abstract-signer';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import { StaticJsonRpcProvider } from '@ethersproject/providers';
+import {
+  InfuraProvider,
+  StaticJsonRpcProvider,
+} from '@ethersproject/providers';
 import { Transaction } from '@ethersproject/transactions';
 import { Wallet } from '@ethersproject/wallet';
+import ERC20_ABI from './abi/ERC20.json';
 import RainbowRouterABI from './abi/RainbowRouter.json';
 import {
   ChainId,
@@ -27,7 +31,10 @@ import {
   TIDUS_ROUTER_CONTRACT_ADDRESS,
   WRAPPED_ASSET,
 } from './utils/constants';
-import { signPermit } from '.';
+import calculateFee, { calculateFeeWithDecimals } from './utils/feeCalculator';
+import { getAmountWithoutDecimals, getEtherWithoutDecimals, signPermit } from '.';
+import axios from 'axios';
+import { formatEther } from '@ethersproject/units';
 
 /**
  * Function to get a swap formatted quote url to use with backend
@@ -166,7 +173,7 @@ export const getMinRefuelAmount = async (params: {
 };
 
 /**
- * Function to get a quote from rainbow's swap aggregator backend
+ * Function to get a quote from rainbow's swap aggregator backend - note that there are helper functions to get the decimal amounts for each token - see `getAmountInTokenDecimals` and `getAmountInEtherDecimals`
  *
  * @param {QuoteParams} params
  * @param {Source} params.source
@@ -174,8 +181,8 @@ export const getMinRefuelAmount = async (params: {
  * @param {EthereumAddress} params.fromAddress
  * @param {EthereumAddress} params.sellTokenAddress
  * @param {EthereumAddress} params.buyTokenAddress
- * @param {BigNumberish} params.sellAmount
- * @param {BigNumberish} params.buyAmount
+ * @param {BigNumberish} params.sellAmount - amount of sellToken to sell (if buyAmount is not provided) - if both are provided, sellAmount will be used - This is the amount that will be swapped, this amount should be provided in its native decimals (e.g. 1 USDC should be 1000000)
+ * @param {BigNumberish} params.buyAmount - amount of buyToken to buy (if sellAmount is not provided) - if both are provided, sellAmount will be used
  * @param {number} params.slippage
  * @param {number} params.feePercentageBasisPoints
  * @returns {Promise<Quote | null>}
@@ -212,7 +219,12 @@ export const getQuote = async (
       buyAmount: sellAmount || buyAmount,
       buyTokenAddress,
       defaultGasLimit: isWrap ? '30000' : '40000',
-      fee: 0,
+      fee: BigNumber.from(sellAmount || buyAmount)
+        .mul(0.45 / 100)
+        .toString(),
+      feeAmount: BigNumber.from(sellAmount || buyAmount)
+        .mul(0.45 / 100)
+        .toString(),
       feePercentageBasisPoints: 0,
       from: fromAddress,
       inputTokenDecimals: 18,
@@ -220,12 +232,19 @@ export const getQuote = async (
       sellAmount: sellAmount || buyAmount,
       sellAmountMinusFees: sellAmount || buyAmount,
       sellTokenAddress,
+      formattedBuyAmount: getEtherWithoutDecimals(sellAmount || buyAmount),
+      formattedSellAmount: getEtherWithoutDecimals(sellAmount || buyAmount),
+      buyAmountInEth: sellAmount || buyAmount,
+      sellAmountInEth: sellAmount || buyAmount,
     } as Quote;
   }
 
   if (isNaN(Number(sellAmount)) && isNaN(Number(buyAmount))) {
     return null;
   }
+
+  const provider = new InfuraProvider(chainId);
+  const sellToken = new Contract(sellTokenAddress, ERC20_ABI, provider);
 
   const url = buildRainbowQuoteUrl({
     buyAmount,
@@ -239,12 +258,89 @@ export const getQuote = async (
     source,
   });
 
-  const response = await fetch(url);
-  const quote = await response.json();
+  const promises = Promise.all([
+    sellToken.decimals(),
+    (async () => {
+      const response = await axios.get(url);
+      const quote = response.data;
+      return quote;
+    })(),
+  ]) as Promise<[number, any]>;
+
+  const [sellTokenDecimals, quote] = await promises;
+
   if (quote.error) {
     return quote as QuoteError;
   }
-  return quote as Quote;
+
+  let result: Quote
+
+  if (sellTokenAddress === ETH_ADDRESS) {
+    result = {
+      ...quote,
+      feeAmount: await calculateFeeWithDecimals(
+        sellTokenAddress,
+        chainId,
+        BigNumber.from(sellAmount).toNumber(),
+        sellTokenDecimals,
+        (quote as Quote).buyAmountInEth
+      ),
+      formattedBuyAmount: await getAmountWithoutDecimals(
+        quote.buyAmount,
+        undefined,
+        buyTokenAddress
+      ),
+      formattedSellAmount: getEtherWithoutDecimals(
+        quote.sellAmount,
+      ),
+    };
+  }
+
+  if (buyTokenAddress === ETH_ADDRESS) {
+    result = {
+      ...quote,
+      feeAmount: await calculateFeeWithDecimals(
+        sellTokenAddress,
+        chainId,
+        BigNumber.from(sellAmount).toNumber(),
+        sellTokenDecimals,
+        (quote as Quote).buyAmountInEth
+      ),
+      formattedBuyAmount: getEtherWithoutDecimals(
+        quote.buyAmount,
+      ),
+      formattedSellAmount: await getAmountWithoutDecimals(
+        quote.sellAmount,
+        undefined,
+        sellTokenAddress
+      ),
+    };
+  }
+
+  if (sellTokenAddress !== ETH_ADDRESS && buyTokenAddress !== ETH_ADDRESS) {
+    result = {
+      ...quote,
+      feeAmount: await calculateFeeWithDecimals(
+        sellTokenAddress,
+        chainId,
+        BigNumber.from(sellAmount).toNumber(),
+        sellTokenDecimals,
+        (quote as Quote).buyAmountInEth
+      ),
+      formattedBuyAmount: await getAmountWithoutDecimals(
+        quote.buyAmount,
+        undefined,
+        buyTokenAddress
+      ),
+      formattedSellAmount: await getAmountWithoutDecimals(
+        quote.sellAmount,
+        undefined,
+        sellTokenAddress
+      ),
+    };
+  }
+
+  return result! as Quote;
 };
 
 /**
@@ -332,10 +428,9 @@ export const fillQuote = async (
     buyTokenAddress,
     to,
     data,
-    fee,
     value,
     sellAmount,
-    feePercentageBasisPoints,
+    feeAmount,
   } = quote;
 
   const ethAddressLowerCase = ETH_ADDRESS.toLowerCase();
@@ -345,7 +440,7 @@ export const fillQuote = async (
       buyTokenAddress,
       to,
       data,
-      fee,
+      feeAmount,
       {
         ...transactionOptions,
         value,
@@ -368,7 +463,7 @@ export const fillQuote = async (
         to,
         data,
         sellAmount,
-        feePercentageBasisPoints,
+        feeAmount,
         permitSignature,
         {
           ...transactionOptions,
@@ -381,7 +476,7 @@ export const fillQuote = async (
         to,
         data,
         sellAmount,
-        feePercentageBasisPoints,
+        feeAmount,
         {
           ...transactionOptions,
           value,
@@ -406,7 +501,7 @@ export const fillQuote = async (
         to,
         data,
         sellAmount,
-        fee,
+        feeAmount,
         permitSignature,
         {
           ...transactionOptions,
@@ -419,8 +514,8 @@ export const fillQuote = async (
         buyTokenAddress,
         to,
         data,
+        feeAmount,
         sellAmount,
-        fee,
         {
           ...transactionOptions,
           value,

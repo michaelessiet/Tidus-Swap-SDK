@@ -63,8 +63,11 @@ export interface Quote {
   sellTokenAddress: EthereumAddress;
   buyTokenAddress: EthereumAddress;
   buyAmount: BigNumberish;
+  formattedBuyAmount: number;
+  formattedSellAmount: number;
   buyAmountInEth: BigNumberish;
   fee: BigNumberish;
+  feeAmount: BigNumberish;
   feePercentageBasisPoints: number;
   protocols?: ProtocolShare[];
   inputTokenDecimals?: number;

@@ -13,7 +13,7 @@ export const COINGECKO_TOKEN_INFO_URLS: { [key in ChainId]: string } = {
   [ChainId.ropsten]: ``,
   [ChainId.rinkeby]: ``,
 };
-export const TIDUS_ROUTER_CONTRACT_ADDRESS = 'ADD THIS';
+export const TIDUS_ROUTER_CONTRACT_ADDRESS = 'TODO:ADD THIS';
 export const SOCKET_REGISTRY_CONTRACT_ADDRESSESS =
   '0xc30141B657f4216252dc59Af2e7CdB9D8792e1B0';
 
@@ -32,6 +32,7 @@ export const DAI: MultiChainAsset = {
   [`${ChainId.mainnet}`]: '0x6b175474e89094c44da98b954eedeac495271d0f',
 };
 export const USDC_ADDRESS = '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48';
+export const USDC_POLYGON_ADDRESS = '0x2791bca1f2de4661ed88a30c99a7a9449aa84174';
 export const TORN_ADDRESS = '0x77777feddddffc19ff86db637967013e6c6a116c';
 export const WNXM_ADDRESS = '0x0d438f3b5175bebc262bf23753c1e53d03432bde';
 export const VSP_ADDRESS = '0x1b40183efb4dd766f11bda7a7c3ad8982e998421';
