@@ -28,7 +28,7 @@ import {
   ETH_ADDRESS,
   MAX_INT,
   PERMIT_EXPIRATION_TS,
-  TIDUS_ROUTER_CONTRACT_ADDRESSES,
+  TIDUS_ROUTER_CONTRACT_ADDRESS,
   WRAPPED_ASSET,
 } from './utils/constants';
 import { calculateFeeWithDecimals } from './utils/feeCalculator';
@@ -89,7 +89,7 @@ const buildRainbowQuoteUrl = ({
     // When buying ETH, we need to tell the aggregator
     // to return the funds to the contract if we need to take a fee
     ...(buyTokenAddress === ETH_ADDRESS
-      ? { destReceiver: TIDUS_ROUTER_CONTRACT_ADDRESS }
+      ? { destReceiver: TIDUS_ROUTER_CONTRACT_ADDRESS[chainId as ChainId] }
       : {}),
     ...(feePercentageBasisPoints !== undefined
       ? { feePercentageBasisPoints: String(feePercentageBasisPoints) }
@@ -420,7 +420,7 @@ export const fillQuote = async (
   chainId: ChainId
 ): Promise<Transaction> => {
   const instance = new Contract(
-    TIDUS_ROUTER_CONTRACT_ADDRESSES[chainId],
+    TIDUS_ROUTER_CONTRACT_ADDRESS[chainId],
     RainbowRouterABI,
     wallet
   );
@@ -562,7 +562,7 @@ export const getQuoteExecutionDetails = (
   provider: StaticJsonRpcProvider
 ): QuoteExecutionDetails => {
   const instance = new Contract(
-    TIDUS_ROUTER_CONTRACT_ADDRESS,
+    TIDUS_ROUTER_CONTRACT_ADDRESS[provider.network.chainId as ChainId],
     RainbowRouterABI,
     provider
   );

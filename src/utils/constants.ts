@@ -15,7 +15,7 @@ export const COINGECKO_TOKEN_INFO_URLS: { [key in ChainId]: string } = {
   [ChainId.ropsten]: ``,
   [ChainId.rinkeby]: ``,
 };
-export const TIDUS_ROUTER_CONTRACT_ADDRESSES: { [key in ChainId]: string } = {
+export const TIDUS_ROUTER_CONTRACT_ADDRESS: { [key in ChainId]: string } = {
   [ChainId.mainnet]: `${routerAddresses.Mainnet}`,
   [ChainId.polygon]: `${routerAddresses.Polygon}`,
   [ChainId.arbitrum]: `${routerAddresses.Arbitrum}`,
