@@ -284,14 +284,15 @@ export const getQuote = async (
       feeAmount: await calculateFeeWithDecimals(
         sellTokenAddress,
         chainId,
-        BigNumber.from(sellAmount).toNumber(),
+        (quote as Quote).sellAmount,
         sellTokenDecimals,
         (quote as Quote).buyAmountInEth
       ),
       formattedBuyAmount: await getAmountWithoutDecimals(
         quote.buyAmount,
         undefined,
-        buyTokenAddress
+        buyTokenAddress,
+        chainId
       ),
       formattedSellAmount: getEtherWithoutDecimals(quote.sellAmount),
     };
@@ -303,7 +304,7 @@ export const getQuote = async (
       feeAmount: await calculateFeeWithDecimals(
         sellTokenAddress,
         chainId,
-        BigNumber.from(sellAmount).toNumber(),
+        (quote as Quote).sellAmount,
         sellTokenDecimals,
         (quote as Quote).buyAmountInEth
       ),
@@ -311,7 +312,8 @@ export const getQuote = async (
       formattedSellAmount: await getAmountWithoutDecimals(
         quote.sellAmount,
         undefined,
-        sellTokenAddress
+        sellTokenAddress,
+        chainId
       ),
     };
   }
@@ -322,19 +324,21 @@ export const getQuote = async (
       feeAmount: await calculateFeeWithDecimals(
         sellTokenAddress,
         chainId,
-        BigNumber.from(sellAmount).toNumber(),
+        (quote as Quote).sellAmount,
         sellTokenDecimals,
         (quote as Quote).buyAmountInEth
       ),
       formattedBuyAmount: await getAmountWithoutDecimals(
         quote.buyAmount,
         undefined,
-        buyTokenAddress
+        buyTokenAddress,
+        chainId
       ),
       formattedSellAmount: await getAmountWithoutDecimals(
         quote.sellAmount,
         undefined,
-        sellTokenAddress
+        sellTokenAddress,
+        chainId
       ),
     };
   }

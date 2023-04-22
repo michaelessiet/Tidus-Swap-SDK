@@ -3,8 +3,7 @@ import axios from 'axios';
 import { ChainId } from '../types';
 import { CoingeckoTokenInfoResponse } from '../types/coingeckoTypes';
 import { COINGECKO_TOKEN_INFO_URLS } from './constants';
-import { parseEther } from './decimalAndWeiCalc';
-import { formatEther } from '@ethersproject/units';
+import {formatEther, formatUnits, parseEther} from 'ethers'
 
 /**
  * Calculates the fee for a given token and amount
@@ -52,11 +51,11 @@ export async function calculateFeeWithDecimals(
     );
     tokenValueInNativeToken = tokenValueInNativeToken * removeDecimals;
   } else {
-    tokenValueInNativeToken = parseFloat(formatEther(amountInEth));
+    tokenValueInNativeToken = parseFloat(formatEther(amountInEth.toString()));
   }
 
   const fee = (0.45 / 100) * tokenValueInNativeToken;
-  const feeInWei = parseEther(fee);
+  const feeInWei = formatUnits(parseEther(fee.toFixed(8)), 'wei');
   return feeInWei;
 }
 

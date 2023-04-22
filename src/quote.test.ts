@@ -1,6 +1,6 @@
 import { getQuote } from './quotes';
 import { ChainId, Quote, SwapType } from './types';
-import { ETH_ADDRESS, USDC_ADDRESS } from './utils/constants';
+import { ETH_ADDRESS, MATIC_ADDRESS, USDC_ADDRESS, USDC_POLYGON_ADDRESS } from './utils/constants';
 import {
   getAmountInTokenDecimals,
   getAmountWithoutDecimals,
@@ -27,3 +27,20 @@ async function main() {
 }
 
 main();
+
+async function mainPolygon() {
+  const quote = await getQuote({
+    chainId: ChainId.polygon,
+    buyTokenAddress: USDC_POLYGON_ADDRESS,
+    sellTokenAddress: MATIC_ADDRESS,
+    fromAddress: '0xB576f4Fac19eA8935A4BAA4F7AD5bc566A5845b1',
+    slippage: 0.01,
+    swapType: SwapType.normal,
+    buyAmount: await getAmountInTokenDecimals(100, undefined, USDC_POLYGON_ADDRESS, ChainId.polygon),
+  })
+
+  console.log('quote', quote);
+
+}
+
+mainPolygon();

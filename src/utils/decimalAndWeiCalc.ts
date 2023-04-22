@@ -1,54 +1,45 @@
 import ERC20_ABI from '../abi/ERC20.json';
-import { InfuraProvider } from '@ethersproject/providers';
-import { Contract } from '@ethersproject/contracts';
+import {JsonRpcProvider, Contract, InfuraProvider, parseEther, parseUnits} from 'ethers'
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import {formatEther, formatUnits} from '@ethersproject/units'
-
-export function parseUnits(amount: number, decimals: number) {
-  return (
-    (amount * 10 ** decimals).toFixed(0) ||
-    BigNumber.from(parseInt(amount.toString())).mul(10 ** decimals)
-  );
-}
-
-export function parseEther(amount: number) {
-  return parseUnits(amount, 18);
-}
+import { ChainId } from '../types';
 
 export async function getAmountInTokenDecimals(
   amount: number,
   decimals?: number,
-  tokenAddress?: string
+  tokenAddress?: string,
+  ChainId?: ChainId
 ) {
   if (!decimals && !tokenAddress) {
     throw new Error('Either decimals or tokenAddress must be provided');
   }
 
   if (!decimals && tokenAddress) {
-    const provider = new InfuraProvider();
+    const provider = new InfuraProvider(ChainId);
     const token = new Contract(tokenAddress, ERC20_ABI, provider);
     decimals = await token.decimals();
   }
 
-  const amountInWei = parseUnits(amount, decimals ?? 0);
+  const amountInWei = parseUnits(amount.toString(), decimals ?? 0);
   return amountInWei.toString();
 }
 
 export function getAmountInEtherDecimals(amount: number) {
-  return parseEther(amount).toString();
+  return parseEther(amount.toString()).toString();
 }
 
 export async function getAmountWithoutDecimals(
   amount: BigNumberish,
   decimals?: number,
-  tokenAddress?: string
+  tokenAddress?: string,
+  chainId?: ChainId
 ) {
   if (!decimals && !tokenAddress) {
     throw new Error('Either decimals or tokenAddress must be provided');
   }
 
   if (!decimals && tokenAddress) {
-    const provider = new InfuraProvider();
+    const provider = new InfuraProvider(chainId);
     const token = new Contract(tokenAddress, ERC20_ABI, provider);
     decimals = await token.decimals();
   }
