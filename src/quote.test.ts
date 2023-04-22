@@ -32,7 +32,7 @@ async function mainPolygon() {
   const quote = await getQuote({
     chainId: ChainId.polygon,
     buyTokenAddress: USDC_POLYGON_ADDRESS,
-    sellTokenAddress: MATIC_ADDRESS,
+    sellTokenAddress: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
     fromAddress: '0xB576f4Fac19eA8935A4BAA4F7AD5bc566A5845b1',
     slippage: 0.01,
     swapType: SwapType.normal,

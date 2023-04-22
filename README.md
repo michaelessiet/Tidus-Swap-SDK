@@ -26,6 +26,8 @@ const quote = await getQuote({
 })
 ```
 
+In the returned quote object, the `sellAmount` and `buyAmount` are in the token's decimals. E.g. if the token has 6 decimals, then the amount is in 6 decimal places. To get the amount in the token's base unit, use the `getAmountInTokenBaseUnits` function. The feeAmount is in the native currency's base units. E.g if the native currency is ETH, then the feeAmount is in wei and if the native currency is Matic then the feeAmount is in wei.
+
 ### fillQuote
 
 This function can is an asynchronous function that fills a quote for a swap. It takes an object as a parameter. E.g:
