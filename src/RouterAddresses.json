@@ -1,0 +1,14 @@
+{
+    "Mainnet": {
+        "RouterAddress": ""
+    },
+    "Polygon": {
+        "RouterAddress": "0x25FE78750f6b756ef8E7946C76C751D080E78c7b",
+    },
+    "Optimism": {
+        "RouterAddress": ""
+    },
+    "Arbitrum": {
+        "RouterAddress": ""
+    }
+}
