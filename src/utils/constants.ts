@@ -1,5 +1,6 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { ChainId, EthereumAddress } from '../types';
+import { default as routerAddresses } from '../RouterAddresses.json';
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 export const MATIC_ADDRESS = '0x0000000000000000000000000000000000001010';
 export const API_BASE_URL = 'https://swap.p.rainbow.me';
@@ -14,7 +15,16 @@ export const COINGECKO_TOKEN_INFO_URLS: { [key in ChainId]: string } = {
   [ChainId.ropsten]: ``,
   [ChainId.rinkeby]: ``,
 };
-export const TIDUS_ROUTER_CONTRACT_ADDRESS = 'TODO:ADD THIS';
+export const TIDUS_ROUTER_CONTRACT_ADDRESSES: { [key in ChainId]: string } = {
+  [ChainId.mainnet]: `${routerAddresses.Mainnet}`,
+  [ChainId.polygon]: `${routerAddresses.Polygon}`,
+  [ChainId.arbitrum]: `${routerAddresses.Arbitrum}`,
+  [ChainId.optimism]: `${routerAddresses.Optimism}`,
+  [ChainId.goerli]: `${routerAddresses.Goerli}`,
+  [ChainId.kovan]: `${routerAddresses.Kovan}`,
+  [ChainId.ropsten]: `${routerAddresses.Ropsten}`,
+  [ChainId.rinkeby]: `${routerAddresses.Rinkeby}`,
+};
 export const SOCKET_REGISTRY_CONTRACT_ADDRESSESS =
   '0xc30141B657f4216252dc59Af2e7CdB9D8792e1B0';
 
