@@ -1,5 +1,5 @@
 
-import { getQuote } from '../quotes';
+import { getQuote, fillQuote } from '../quotes';
 import { ChainId, Quote, SwapType } from '../types';
 import { USDC_POLYGON_ADDRESS, MATIC_ADDRESS } from '../utils/constants';
 import {
@@ -13,8 +13,8 @@ async function main() {
     fromAddress: '0x246913F9b282208E8377E0251900bd3942B35c1c',
     buyTokenAddress: USDC_POLYGON_ADDRESS,
     sellTokenAddress: MATIC_ADDRESS,
-    slippage: 0.5,
-    sellAmount: await getAmountInTokenDecimals(1, 1**18, MATIC_ADDRESS),
+    slippage: 0.1,
+    sellAmount: await getAmountInTokenDecimals(10, 18),
     swapType: SwapType.normal,
   });
   const stoptime = new Date().getTime();
