@@ -43,7 +43,6 @@ export async function calculateFeeWithDecimals(
   const removeDecimals = BigNumber.from(amount)
     .div(BigNumber.from(10).pow(decimalsOfToken))
     .toNumber();
-  let tokenPriceInNativeToken;
   let tokenValueInNativeToken;
 
   if (!amountInEth) {
