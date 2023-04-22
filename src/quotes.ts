@@ -31,14 +31,13 @@ import {
   TIDUS_ROUTER_CONTRACT_ADDRESS,
   WRAPPED_ASSET,
 } from './utils/constants';
-import calculateFee, { calculateFeeWithDecimals } from './utils/feeCalculator';
+import { calculateFeeWithDecimals } from './utils/feeCalculator';
 import {
   getAmountWithoutDecimals,
   getEtherWithoutDecimals,
   signPermit,
 } from '.';
 import axios from 'axios';
-import { formatEther } from '@ethersproject/units';
 
 /**
  * Function to get a swap formatted quote url to use with backend

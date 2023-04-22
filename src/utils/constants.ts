@@ -1,6 +1,7 @@
 import { BigNumber } from '@ethersproject/bignumber';
 import { ChainId, EthereumAddress } from '../types';
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+export const MATIC_ADDRESS = '0x0000000000000000000000000000000000001010';
 export const API_BASE_URL = 'https://swap.p.rainbow.me';
 export const COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
 export const COINGECKO_TOKEN_INFO_URLS: { [key in ChainId]: string } = {
