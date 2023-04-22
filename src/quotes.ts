@@ -28,7 +28,7 @@ import {
   ETH_ADDRESS,
   MAX_INT,
   PERMIT_EXPIRATION_TS,
-  TIDUS_ROUTER_CONTRACT_ADDRESS,
+  TIDUS_ROUTER_CONTRACT_ADDRESSES,
   WRAPPED_ASSET,
 } from './utils/constants';
 import { calculateFeeWithDecimals } from './utils/feeCalculator';
@@ -420,7 +420,7 @@ export const fillQuote = async (
   chainId: ChainId
 ): Promise<Transaction> => {
   const instance = new Contract(
-    TIDUS_ROUTER_CONTRACT_ADDRESS,
+    TIDUS_ROUTER_CONTRACT_ADDRESSES[chainId],
     RainbowRouterABI,
     wallet
   );
