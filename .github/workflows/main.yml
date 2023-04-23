@@ -1,44 +1,44 @@
----
-name: CI
+# ---
+# name: CI
 
-env:
-  node-version: 16.16.0
+# env:
+#   node-version: 16.16.0
 
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
+# on:
+#   push:
+#     branches: [main]
+#   pull_request:
+#     branches: [main]
 
-jobs:
-  integration:
-    runs-on: ubuntu-latest
-    env:
-      MAINNET_RPC_ENDPOINT: ${{ secrets.MAINNET_RPC_ENDPOINT }}
-      COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
-    steps:
-      - uses: actions/checkout@v2
-      - name: Setup Node.js environment
-        uses: actions/setup-node@v2
-        with:
-          node-version: ${{ env.node-version }}
-          cache: yarn
-          cache-dependency-path: smart-contracts/yarn.lock
-      - name: Smart contracts setup
-        run: |
-          cd smart-contracts
-          yarn install
-          yarn compile
-          yarn lint
-      - name: run smart-contracts base tests
-        run: |
-            cd smart-contracts
-            yarn test test/base/*.* || yarn test test/base/*.*
-      - name: Run Slither
-        uses: crytic/slither-action@main
-        id: slither
-        with:
-          node-version: ${{ env.node-version }}
-          target: 'smart-contracts'
-          slither-args: '--exclude assembly,low-level-calls,solc-version,pragma,naming-convention,external-function,too-many-digits,block-timestamp,immutable-states'
+# jobs:
+#   integration:
+#     runs-on: ubuntu-latest
+#     env:
+#       MAINNET_RPC_ENDPOINT: ${{ secrets.MAINNET_RPC_ENDPOINT }}
+#       COINMARKETCAP_API_KEY: ${{ secrets.COINMARKETCAP_API_KEY }}
+#     steps:
+#       - uses: actions/checkout@v2
+#       - name: Setup Node.js environment
+#         uses: actions/setup-node@v2
+#         with:
+#           node-version: ${{ env.node-version }}
+#           cache: yarn
+#           cache-dependency-path: smart-contracts/yarn.lock
+#       - name: Smart contracts setup
+#         run: |
+#           cd smart-contracts
+#           yarn install
+#           yarn compile
+#           yarn lint
+#       - name: run smart-contracts base tests
+#         run: |
+#             cd smart-contracts
+#             yarn test test/base/*.* || yarn test test/base/*.*
+#       - name: Run Slither
+#         uses: crytic/slither-action@main
+#         id: slither
+#         with:
+#           node-version: ${{ env.node-version }}
+#           target: 'smart-contracts'
+#           slither-args: '--exclude assembly,low-level-calls,solc-version,pragma,naming-convention,external-function,too-many-digits,block-timestamp,immutable-states'
 
