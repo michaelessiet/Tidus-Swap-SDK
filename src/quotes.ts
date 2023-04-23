@@ -419,8 +419,9 @@ export const fillQuote = async (
   permit: boolean,
   chainId: ChainId
 ): Promise<Transaction> => {
+  console.log('TIDUS ROUTER ADDRESS', TIDUS_ROUTER_CONTRACT_ADDRESS[chainId])
   const instance = new Contract(
-    TIDUS_ROUTER_CONTRACT_ADDRESS[chainId],
+    TIDUS_ROUTER_CONTRACT_ADDRESS[chainId].toString(),
     RainbowRouterABI,
     wallet
   );

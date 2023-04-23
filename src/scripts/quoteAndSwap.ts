@@ -2,14 +2,15 @@
 import { getQuote, fillQuote } from '../quotes';
 import { ChainId, Quote, SwapType } from '../types';
 import { USDC_POLYGON_ADDRESS, MATIC_ADDRESS } from '../utils/constants';
-import { ethers } from 'ethers';
+import { Wallet } from '@ethersproject/wallet';
+import { JsonRpcProvider } from '@ethersproject/providers';
 import {
   getAmountInTokenDecimals,
 } from '../utils/decimalAndWeiCalc';
 
 async function main() {
-  const provider = ethers.getDefaultProvider(ChainId.polygon);
-  const wallet = new ethers.Wallet(process.env.PRIVATE_KEY as string);
+  const provider = new JsonRpcProvider(`${process.env.ALCHEMY_API_URL}`, 'matic');
+  const wallet = new Wallet(`${process.env.PRIVATE_KEY}`, provider);
   const starttime = new Date().getTime();
   const quote = await getQuote({
     chainId: ChainId.polygon,
@@ -35,7 +36,9 @@ async function main() {
     wallet,
     true,
     ChainId.polygon,
-
   );
 
+  console.log(swap.data);
 }
+
+main();
