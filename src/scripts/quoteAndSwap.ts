@@ -27,11 +27,13 @@ async function main() {
   console.log('quote', quote);
   console.log("Buy amount: ", (quote as Quote).formattedBuyAmount);
   console.log("Sell amount: ", (quote as Quote).formattedSellAmount);
+
   
   const swap = await fillQuote(
     quote as Quote,
     {
-      value: 1
+      value: 1,
+      gasLimit: (quote as Quote).defaultGasLimit
     },
     wallet,
     true,
