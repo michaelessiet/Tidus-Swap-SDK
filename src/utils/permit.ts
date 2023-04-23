@@ -12,6 +12,8 @@ import { DAI, TORN_ADDRESS, VSP_ADDRESS, WNXM_ADDRESS } from '..';
 import DAIAbi from '../abi/DAI.json';
 import IERC2612Abi from '../abi/IERC2612.json';
 import { ChainId, EthereumAddress } from '../types';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 const EIP712_DOMAIN_TYPE = [
   { name: 'name', type: 'string' },
@@ -150,7 +152,7 @@ export async function signPermit(
   const name = await token.name();
   const [nonce, version] = await Promise.all([
     getNonces(token, owner),
-    getPermitVersion(token as any, name, chainId, token.address),
+    getPermitVersion(token as any, name, chainId, await token.getAddress()),
   ]);
 
   const message: MessageParam = {
@@ -171,7 +173,7 @@ export async function signPermit(
   const domain: DomainParam = {
     chainId,
     name,
-    verifyingContract: token.address,
+    verifyingContract: await token.getAddress(),
   };
   if (version !== null) {
     domain.version = version;
