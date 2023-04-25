@@ -299,13 +299,6 @@ export const getQuote = async (
     };
   }
 
-  // if (chainId === ChainId.polygon && sellTokenAddress === MATIC_ADDRESS) {
-  //   result = {
-  //     ...quote,
-  //     feeAmount: 
-  //   }
-  // }
-
   if (buyTokenAddress === ETH_ADDRESS) {
     result = {
       ...quote,
