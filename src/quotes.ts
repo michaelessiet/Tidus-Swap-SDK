@@ -26,6 +26,7 @@ import {
 import {
   API_BASE_URL,
   ETH_ADDRESS,
+  MATIC_ADDRESS,
   MAX_INT,
   PERMIT_EXPIRATION_TS,
   TIDUS_ROUTER_CONTRACT_ADDRESS,
@@ -298,6 +299,13 @@ export const getQuote = async (
     };
   }
 
+  // if (chainId === ChainId.polygon && sellTokenAddress === MATIC_ADDRESS) {
+  //   result = {
+  //     ...quote,
+  //     feeAmount: 
+  //   }
+  // }
+
   if (buyTokenAddress === ETH_ADDRESS) {
     result = {
       ...quote,
@@ -438,7 +446,7 @@ export const fillQuote = async (
 
   const ethAddressLowerCase = ETH_ADDRESS.toLowerCase();
 
-  if (sellTokenAddress?.toLowerCase() === ethAddressLowerCase) {
+  if (sellTokenAddress?.toLowerCase() === ethAddressLowerCase || sellTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase()) {
     swapTx = await instance.fillQuoteEthToToken(
       buyTokenAddress,
       to,
@@ -449,7 +457,7 @@ export const fillQuote = async (
         value: BigNumber.from(feeAmount).add(value ?? 0),
       }
     );
-  } else if (buyTokenAddress?.toLowerCase() === ethAddressLowerCase) {
+  } else if (buyTokenAddress?.toLowerCase() === ethAddressLowerCase || buyTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase()) {
     if (permit) {
       const deadline = await calculateDeadline(wallet as Wallet);
       const permitSignature = await signPermit(
