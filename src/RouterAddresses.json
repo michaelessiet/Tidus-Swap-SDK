@@ -10,5 +10,17 @@
     },
     "Arbitrum": {
         "RouterAddress": ""
+    },
+    "Goerli": {
+        "RouterAddress": ""
+    },
+    "Kovan": {
+        "RouterAddress": ""
+    },
+    "Rinkeby": {
+        "RouterAddress": ""
+    },
+    "Ropsten": {
+        "RouterAddress": ""
     }
 }
