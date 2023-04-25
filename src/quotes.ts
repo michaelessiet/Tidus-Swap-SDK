@@ -420,7 +420,7 @@ export const fillQuote = async (
   permit: boolean,
   chainId: ChainId
 ): Promise<Transaction> => {
-  console.log('TIDUS ROUTER ADDRESS', TIDUS_ROUTER_CONTRACT_ADDRESS[chainId])
+  console.log('TIDUS ROUTER ADDRESS', TIDUS_ROUTER_CONTRACT_ADDRESS[chainId]);
   const instance = new Contract(
     TIDUS_ROUTER_CONTRACT_ADDRESS[chainId].toString(),
     RainbowRouterABI,
@@ -440,7 +440,11 @@ export const fillQuote = async (
 
   const ethAddressLowerCase = ETH_ADDRESS.toLowerCase();
 
-  if (sellTokenAddress?.toLowerCase() === ethAddressLowerCase || sellTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase()) {
+  if (
+    sellTokenAddress?.toLowerCase() === ethAddressLowerCase ||
+    (sellTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase() &&
+      chainId === ChainId.polygon)
+  ) {
     swapTx = await instance.fillQuoteEthToToken(
       buyTokenAddress,
       to,
@@ -451,7 +455,11 @@ export const fillQuote = async (
         value: BigNumber.from(feeAmount).add(value ?? 0),
       }
     );
-  } else if (buyTokenAddress?.toLowerCase() === ethAddressLowerCase || buyTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase()) {
+  } else if (
+    buyTokenAddress?.toLowerCase() === ethAddressLowerCase ||
+    (buyTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase() &&
+      chainId === ChainId.polygon)
+  ) {
     if (permit) {
       const deadline = await calculateDeadline(wallet as Wallet);
       const permitSignature = await signPermit(
