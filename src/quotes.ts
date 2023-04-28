@@ -90,6 +90,7 @@ const buildRainbowQuoteUrl = ({
     // When buying ETH, we need to tell the aggregator
     // to return the funds to the contract if we need to take a fee
     ...(buyTokenAddress === ETH_ADDRESS
+      || buyTokenAddress === MATIC_ADDRESS
       ? { destReceiver: TIDUS_ROUTER_CONTRACT_ADDRESS[chainId as ChainId] }
       : {}),
     ...(feePercentageBasisPoints !== undefined
@@ -279,7 +280,7 @@ export const getQuote = async (
 
   let result: Quote;
 
-  if (sellTokenAddress === ETH_ADDRESS) {
+  if (sellTokenAddress === ETH_ADDRESS || sellTokenAddress == MATIC_ADDRESS) {
     result = {
       ...quote,
       feeAmount: await calculateFeeWithDecimals(
@@ -420,7 +421,6 @@ export const fillQuote = async (
   permit: boolean,
   chainId: ChainId
 ): Promise<Transaction> => {
-  console.log('TIDUS ROUTER ADDRESS', TIDUS_ROUTER_CONTRACT_ADDRESS[chainId]);
   const instance = new Contract(
     TIDUS_ROUTER_CONTRACT_ADDRESS[chainId].toString(),
     RainbowRouterABI,
@@ -445,6 +445,7 @@ export const fillQuote = async (
     (sellTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase() &&
       chainId === ChainId.polygon)
   ) {
+    console.log("Filling Quote ETH to Token")
     swapTx = await instance.fillQuoteEthToToken(
       buyTokenAddress,
       to,
@@ -460,6 +461,7 @@ export const fillQuote = async (
     (buyTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase() &&
       chainId === ChainId.polygon)
   ) {
+    console.log("Filling Quote Token to ETH");
     if (permit) {
       const deadline = await calculateDeadline(wallet as Wallet);
       const permitSignature = await signPermit(
@@ -497,6 +499,7 @@ export const fillQuote = async (
       );
     }
   } else {
+    console.log("Filling Quote Token to Token");
     if (permit) {
       const deadline = await calculateDeadline(wallet as Wallet);
       const permitSignature = await signPermit(
