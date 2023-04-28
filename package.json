@@ -17,7 +17,6 @@
     "script": "ts-node",
     "test": "jest",
     "lint": "eslint . --ext js,ts,jsx,tsx",
-    "prepare": "tsdx build",
     "size": "size-limit",
     "analyze": "size-limit --why"
   },
