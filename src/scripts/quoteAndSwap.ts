@@ -60,15 +60,18 @@ async function main() {
   const feeData = await provider.getFeeData();
   const nonce = await wallet.getTransactionCount();
 
-  console.log("VALUE:", params.value)
+  console.log("Fee Data: ", {
+    lastBaseFeePerGas: feeData.lastBaseFeePerGas?.toString(),
+    maxFeePerGas: feeData.maxFeePerGas?.toString(),
+    maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
+    gasPrice: feeData.gasPrice?.toString(),
+  });
+
   const swap = await fillQuote(
     quote as Quote,
     { 
       value: (params.value), 
-      gasLimit: estimatedGas.toString(), 
-      maxFeePerGas: feeData.maxFeePerGas?.toString(), 
-      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
-      nonce: nonce.toString(), 
+      gasPrice: feeData.gasPrice?.toString(),
     },
     wallet,
     false,

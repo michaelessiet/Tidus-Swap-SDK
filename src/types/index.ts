@@ -213,6 +213,7 @@ export interface CrosschainQuote extends Quote {
 }
 
 export interface TransactionOptions {
+  gasPrice?: string;
   gasLimit?: string;
   maxFeePerGas?: string;
   maxPriorityFeePerGas?: string;
