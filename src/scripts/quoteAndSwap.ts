@@ -6,6 +6,7 @@ import { Wallet } from '@ethersproject/wallet';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { default as RainbowRouterABI } from '../abi/RainbowRouter.json';
+import { BigNumber } from '@ethersproject/bignumber';
 import {
   getAmountInTokenDecimals,
 } from '../utils/decimalAndWeiCalc';
@@ -32,7 +33,8 @@ async function main() {
 
   const { params, methodArgs } = getQuoteExecutionDetails(
     (quote as Quote),
-    { from: (quote as Quote).from },      
+    { from: (quote as Quote).from 
+    },      
     provider
   );
 
@@ -43,27 +45,37 @@ async function main() {
   );
 
 
+  let estimatedGas;
   try {
-    const estimatedGas = await contract.estimateGas.fillQuoteEthToToken(...methodArgs)
-    console.log(estimatedGas)
+    estimatedGas = await contract.estimateGas.fillQuoteEthToToken(...methodArgs, { from: wallet.address, value: params.value });
+    console.log("Estimated Gas to fill the quote: ", estimatedGas.toNumber());
   } catch (error) {
     const json = JSON.stringify(error);
     const obj = JSON.parse(json);
     console.log("Error Body: ", obj.error.body);
     console.log("Error Data: ", obj.error.error);
-
+    estimatedGas = BigNumber.from(0);
   }
 
-  
-  // const swap = await fillQuote(
-  //   quote as Quote,
-  //   params,
-  //   wallet,
-  //   false,
-  //   ChainId.polygon,
-  // );
+  const feeData = await provider.getFeeData();
+  const nonce = await wallet.getTransactionCount();
 
-  // console.log(swap.data);
+  console.log("VALUE:", params.value)
+  const swap = await fillQuote(
+    quote as Quote,
+    { 
+      value: (params.value), 
+      gasLimit: estimatedGas.toString(), 
+      maxFeePerGas: feeData.maxFeePerGas?.toString(), 
+      maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString(),
+      nonce: nonce.toString(), 
+    },
+    wallet,
+    false,
+    ChainId.polygon,
+  );
+
+  console.log(swap.data);
 }
 
 main();

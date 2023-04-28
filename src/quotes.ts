@@ -453,7 +453,7 @@ export const fillQuote = async (
       feeAmount,
       {
         ...transactionOptions,
-        value: BigNumber.from(feeAmount).add(value ?? 0),
+        value: BigNumber.from(sellAmount).add(feeAmount ?? 0),
       }
     );
   } else if (
@@ -482,7 +482,7 @@ export const fillQuote = async (
         permitSignature,
         {
           ...transactionOptions,
-          value: BigNumber.from(feeAmount).add(value ?? 0),
+          value: BigNumber.from(sellAmount).add(feeAmount ?? 0),
         }
       );
     } else {
