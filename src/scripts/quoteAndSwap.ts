@@ -6,11 +6,9 @@ import { Wallet } from '@ethersproject/wallet';
 import { JsonRpcProvider } from '@ethersproject/providers';
 import { Contract } from '@ethersproject/contracts';
 import { default as RainbowRouterABI } from '../abi/RainbowRouter.json';
-import { default as ERC20ABI } from '../abi/ERC20.json';
 import {
   getAmountInTokenDecimals,
 } from '../utils/decimalAndWeiCalc';
-import { BigNumberish } from '@ethersproject/bignumber';
 
 async function main() {
   const provider = new JsonRpcProvider(`${process.env.ALCHEMY_API_URL}`, 'matic');
@@ -44,42 +42,18 @@ async function main() {
     wallet
   );
 
-  // Set an allowance for the "to" address to sell the sellToken
-  const matic = new Contract(
-    MATIC_ADDRESS[ChainId.polygon],
-    ERC20ABI,
-    wallet
-  );
-
-  function isApproved(amount: BigNumberish): boolean {
-    const allowance = matic.allowance(wallet.address, TIDUS_ROUTER_CONTRACT_ADDRESS[ChainId.polygon]);
-    if (allowance >= amount) {
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  if (!isApproved((quote as Quote).sellAmount)) {
-    const setAllowance = await matic.approve(
-      (quote as Quote).to,
-      (quote as Quote).sellAmount
-    );
-      setAllowance.wait();
-  }
-
 
   try {
     const estimatedGas = await contract.estimateGas.fillQuoteEthToToken(...methodArgs)
+    console.log(estimatedGas)
   } catch (error) {
     const json = JSON.stringify(error);
     const obj = JSON.parse(json);
-    const errData: string = obj.error.error;
-    console.log(errData)
+    console.log("Error Body: ", obj.error.body);
+    console.log("Error Data: ", obj.error.error);
 
   }
 
-  // console.log(estimatedGas)
   
   // const swap = await fillQuote(
   //   quote as Quote,
