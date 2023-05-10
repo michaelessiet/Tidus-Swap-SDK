@@ -32,64 +32,42 @@ async function main() {
   console.log("Buy amount: ", (quote as Quote).formattedBuyAmount);
   console.log("Sell amount: ", (quote as Quote).formattedSellAmount);
 
-  // const { params, methodArgs } = getQuoteExecutionDetails(
-  //   (quote as Quote),
-  //   { from: (quote as Quote).from },      
-  //   provider
-  // );
+  const feeData = await provider.getFeeData();
 
-  // const contract = new Contract(
-  //   TIDUS_ROUTER_CONTRACT_ADDRESS[ChainId.polygon],
-  //   RainbowRouterABI,
-  //   wallet
-  // );
+  const { params, methodArgs } = getQuoteExecutionDetails(
+    (quote as Quote),
+    { 
+      from: (quote as Quote).from, 
+      gasPrice: feeData.gasPrice?.toString(),
+    },
+    provider
+  );
 
-  // // Set an allowance for the "to" address to sell the sellToken
-  // const matic = new Contract(
-  //   MATIC_ADDRESS[ChainId.polygon],
-  //   ERC20ABI,
-  //   wallet
-  // );
+  const contract = new Contract(
+    TIDUS_ROUTER_CONTRACT_ADDRESS[ChainId.polygon],
+    RainbowRouterABI,
+    wallet
+  );
 
-  // function isApproved(amount: BigNumberish): boolean {
-  //   const allowance = matic.allowance(wallet.address, TIDUS_ROUTER_CONTRACT_ADDRESS[ChainId.polygon]);
-  //   if (allowance >= amount) {
-  //     return true;
-  //   } else {
-  //     return false;
-  //   }
-  // }
+  try {
+    const estimatedGas = await contract.estimateGas.fillQuoteEthToToken(...methodArgs)
+    console.log("ESTIMATED GAS TO SWAP: ", estimatedGas.toString());
+  } catch (error) {
+    const json = JSON.stringify(error);
+    const obj = JSON.parse(json);
+    const errData: string = obj.error.error;
+    console.log(errData)
+  }
 
-  // if (!isApproved((quote as Quote).sellAmount)) {
-  //   const setAllowance = await matic.approve(
-  //     (quote as Quote).to,
-  //     (quote as Quote).sellAmount
-  //   );
-  //     setAllowance.wait();
-  // }
+  const swap = await fillQuote(
+    quote as Quote,
+    params,
+    wallet,
+    false,
+    ChainId.polygon,
+  );
 
-
-  // try {
-  //   const estimatedGas = await contract.estimateGas.fillQuoteEthToToken(...methodArgs)
-  // } catch (error) {
-  //   const json = JSON.stringify(error);
-  //   const obj = JSON.parse(json);
-  //   const errData: string = obj.error.error;
-  //   console.log(errData)
-
-  // }
-
-  // console.log(estimatedGas)
-  
-  // const swap = await fillQuote(
-  //   quote as Quote,
-  //   params,
-  //   wallet,
-  //   false,
-  //   ChainId.polygon,
-  // );
-
-  // console.log(swap.data);
+  console.log(swap.hash);
 }
 
 main();
