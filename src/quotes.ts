@@ -77,27 +77,26 @@ const buildRainbowQuoteUrl = ({
   slippage: number;
 }) => {
   const searchParams = new URLSearchParams({
-    buyToken: buyTokenAddress,
+    fromAddress: fromAddress,
+    buyTokenAddress: buyTokenAddress,
+    sellTokenAddress: sellTokenAddress,
     chainId: String(chainId),
-    fromAddress,
-    sellToken: sellTokenAddress,
-    slippage: String(slippage),
-    swapType: SwapType.normal,
-    ...(source ? { source } : {}),
     ...(sellAmount
       ? { sellAmount: String(sellAmount) }
       : { buyAmount: String(buyAmount) }),
+    slippage: String(slippage),
+    swapType: SwapType.normal,
+    ...(source ? { source } : {}),
     // When buying ETH, we need to tell the aggregator
     // to return the funds to the contract if we need to take a fee
     ...(buyTokenAddress === ETH_ADDRESS
-      || buyTokenAddress === MATIC_ADDRESS
       ? { destReceiver: TIDUS_ROUTER_CONTRACT_ADDRESS[chainId as ChainId] }
       : {}),
     ...(feePercentageBasisPoints !== undefined
       ? { feePercentageBasisPoints: String(feePercentageBasisPoints) }
       : {}),
   });
-  return `${API_BASE_URL}/v1/quote?` + searchParams.toString();
+  return `${API_BASE_URL}/swap/quote?` + searchParams.toString();
 };
 
 /**
@@ -133,17 +132,17 @@ const buildRainbowCrosschainQuoteUrl = ({
   refuel?: boolean;
 }) => {
   const searchParams = new URLSearchParams({
-    buyToken: buyTokenAddress,
-    chainId: String(chainId),
     fromAddress,
+    buyToken: buyTokenAddress,
+    sellToken: sellTokenAddress,
+    chainId: String(chainId),
     refuel: String(refuel),
     sellAmount: String(sellAmount),
-    sellToken: sellTokenAddress,
     slippage: String(slippage),
     swapType: SwapType.crossChain,
     toChainId: String(toChainId),
   });
-  return `${API_BASE_URL}/v1/quote?` + searchParams.toString();
+  return `${API_BASE_URL}/swap/quote?` + searchParams.toString();
 };
 
 /**
@@ -252,13 +251,13 @@ export const getQuote = async (
   const sellToken = new Contract(sellTokenAddress, ERC20_ABI, provider);
 
   const url = buildRainbowQuoteUrl({
-    buyAmount,
-    buyTokenAddress,
-    chainId,
-    feePercentageBasisPoints,
     fromAddress,
-    sellAmount,
+    buyTokenAddress,
     sellTokenAddress,
+    chainId,
+    buyAmount,
+    sellAmount,
+    feePercentageBasisPoints,
     slippage,
     source,
   });
@@ -541,7 +540,6 @@ export const fillQuote = async (
   }
   return swapTx;
 };
-
 /**
  * Function that fills a crosschain swap quote onchain via rainbow's swap aggregator smart contract
  *
