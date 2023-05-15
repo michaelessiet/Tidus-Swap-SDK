@@ -3,7 +3,7 @@ import { ChainId, EthereumAddress } from '../types';
 import { default as routerAddresses } from '../RouterAddresses.json';
 export const ETH_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
 export const MATIC_ADDRESS = '0x0000000000000000000000000000000000001010';
-export const API_BASE_URL = 'https://swap.p.rainbow.me';
+export const API_BASE_URL = 'https://tidusappservice.com';
 export const COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
 export const COINGECKO_TOKEN_INFO_URLS: { [key in ChainId]: string } = {
   [ChainId.mainnet]: `${COINGECKO_BASE_URL}/coins/ethereum/contract`,

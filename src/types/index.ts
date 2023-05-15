@@ -1,5 +1,6 @@
 import { BigNumberish } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
+import { Token } from '../utils/token';
 
 export enum ChainId {
   mainnet = 1,
@@ -28,15 +29,13 @@ export interface QuoteParams {
   source?: Source;
   chainId: number;
   fromAddress: EthereumAddress;
-  sellTokenAddress: EthereumAddress;
-  buyTokenAddress: EthereumAddress;
+  buyToken: Token
+  sellToken: Token
   sellAmount?: BigNumberish;
   buyAmount?: BigNumberish;
-  slippage: number;
   destReceiver?: EthereumAddress;
   refuel?: boolean;
   swapType: SwapType;
-  feePercentageBasisPoints?: number;
   toChainId?: number;
 }
 
