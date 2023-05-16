@@ -1,46 +1,68 @@
 import { getQuote } from './quotes';
 import { ChainId, Quote, SwapType } from './types';
-import { ETH_ADDRESS, MATIC_ADDRESS, USDC_ADDRESS, USDC_POLYGON_ADDRESS } from './utils/constants';
-import {
-  getAmountInTokenDecimals,
-  getAmountWithoutDecimals,
-  getEtherWithoutDecimals,
-} from './utils/decimalAndWeiCalc';
+import { ETH_ADDRESS, MATIC_ADDRESS, USDC_ADDRESS } from './utils/constants';
+import { getAmountInTokenDecimals } from './utils/decimalAndWeiCalc';
+import { Token } from './utils/token';
 
-async function main() {
-  const starttime = new Date().getTime();
-  const quote = await getQuote({
-    chainId: ChainId.mainnet,
-    fromAddress: '0xB576f4Fac19eA8935A4BAA4F7AD5bc566A5845b1',
-    buyTokenAddress: ETH_ADDRESS,
-    sellTokenAddress: USDC_ADDRESS,
-    slippage: 0.01,
-    sellAmount: await getAmountInTokenDecimals(100, undefined, USDC_ADDRESS),
-    swapType: SwapType.normal,
-  });
-  const stoptime = new Date().getTime();
+// async function main() {
+//   const starttime = new Date().getTime();
+//   const buyToken = new Token({
+//     contractAddress: ETH_ADDRESS,
+//     decimals: 18,
+//   });
+//   const sellToken = new Token({
+//     contractAddress: USDC_ADDRESS,
+//     decimals: 6,
+//   });
+//   const quote = await getQuote({
+//     chainId: ChainId.mainnet,
+//     fromAddress: '0xB576f4Fac19eA8935A4BAA4F7AD5bc566A5845b1',
+//     buyToken,
+//     sellToken,
+//     sellAmount: await getAmountInTokenDecimals(100, sellToken.decimals, USDC_ADDRESS),
+//     // sellAmount: '100000000',
+//     swapType: SwapType.normal,
+//   });
+//   const stoptime = new Date().getTime();
 
-  console.log("Time: ", stoptime - starttime);
-  console.log('quote', quote);
-  console.log("Buy amount: ", (quote as Quote).formattedBuyAmount)
-  console.log("Sell amount: ", (quote as Quote).formattedSellAmount)
-}
+//   console.log('Time: ', stoptime - starttime);
+//   console.log('quote', quote);
+//   console.log('Buy amount: ', (quote as Quote).formattedBuyAmount);
+//   console.log('Sell amount: ', (quote as Quote).formattedSellAmount);
+// }
 
-main();
+// main();
 
 async function mainPolygon() {
+  const startTime = new Date().getTime()
+
+  const buyToken = new Token({
+    contractAddress: MATIC_ADDRESS,
+    decimals: 18,
+    chainId: 137
+  })
+  const sellToken = new Token({
+    contractAddress: '0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619',
+    decimals: 18,
+    chainId: 137
+  })
   const quote = await getQuote({
     chainId: ChainId.polygon,
-    buyTokenAddress: MATIC_ADDRESS,
-    sellTokenAddress: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
+    buyToken: buyToken,
+    sellToken,
     fromAddress: '0xB576f4Fac19eA8935A4BAA4F7AD5bc566A5845b1',
-    slippage: 0.01,
     swapType: SwapType.normal,
-    buyAmount: await getAmountInTokenDecimals(100, undefined, MATIC_ADDRESS, ChainId.polygon),
-  })
+    buyAmount: await getAmountInTokenDecimals(
+      100,
+      buyToken.decimals,
+      buyToken.contractAddress,
+      buyToken.chainId
+    ),
+  });
+  const stopTime = new Date().getTime()
 
   console.log('quote', quote);
-
+  console.log(stopTime - startTime)
 }
 
 mainPolygon();

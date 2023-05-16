@@ -2,12 +2,10 @@ import { Signer } from '@ethersproject/abstract-signer';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import {
-  InfuraProvider,
   StaticJsonRpcProvider,
 } from '@ethersproject/providers';
 import { Transaction } from '@ethersproject/transactions';
 import { Wallet } from '@ethersproject/wallet';
-import ERC20_ABI from './abi/ERC20.json';
 import RainbowRouterABI from './abi/RainbowRouter.json';
 import {
   ChainId,
@@ -34,6 +32,7 @@ import {
 } from './utils/constants';
 import { calculateFeeWithDecimals } from './utils/feeCalculator';
 import {
+  Token,
   getAmountWithoutDecimals,
   getEtherWithoutDecimals,
   signPermit,
@@ -54,7 +53,7 @@ import axios from 'axios';
  * @param {number} params.slippage
  * @returns {string}
  */
-const buildRainbowQuoteUrl = ({
+const buildTidusQuoteUrl = ({
   chainId,
   sellTokenAddress,
   buyTokenAddress,
@@ -62,8 +61,6 @@ const buildRainbowQuoteUrl = ({
   sellAmount,
   fromAddress,
   source,
-  feePercentageBasisPoints,
-  slippage,
 }: {
   chainId: number;
   toChainId?: number;
@@ -72,31 +69,21 @@ const buildRainbowQuoteUrl = ({
   buyAmount?: BigNumberish;
   sellAmount?: BigNumberish;
   fromAddress: EthereumAddress;
-  feePercentageBasisPoints?: number;
   source?: Source;
-  slippage: number;
 }) => {
   const searchParams = new URLSearchParams({
-    fromAddress: fromAddress,
     buyTokenAddress: buyTokenAddress,
-    sellTokenAddress: sellTokenAddress,
     chainId: String(chainId),
+    fromAddress,
+    sellTokenAddress: sellTokenAddress,
+    // slippage: String(slippage),
+    // swapType: SwapType.normal,
+    ...(source ? { source } : {}),
     ...(sellAmount
       ? { sellAmount: String(sellAmount) }
       : { buyAmount: String(buyAmount) }),
-    slippage: String(slippage),
-    swapType: SwapType.normal,
-    ...(source ? { source } : {}),
-    // When buying ETH, we need to tell the aggregator
-    // to return the funds to the contract if we need to take a fee
-    ...(buyTokenAddress === ETH_ADDRESS
-      ? { destReceiver: TIDUS_ROUTER_CONTRACT_ADDRESS[chainId as ChainId] }
-      : {}),
-    ...(feePercentageBasisPoints !== undefined
-      ? { feePercentageBasisPoints: String(feePercentageBasisPoints) }
-      : {}),
   });
-  return `${API_BASE_URL}/swap/quote?` + searchParams.toString();
+  return `${API_BASE_URL}/api/swap/quote?` + searchParams.toString();
 };
 
 /**
@@ -104,41 +91,37 @@ const buildRainbowQuoteUrl = ({
  *
  * @param {ChainId} params.chainId
  * @param {ChainId} params.toChainId
- * @param {EthereumAddress} params.sellTokenAddress
- * @param {EthereumAddress} params.buyTokenAddress
+ * @param {Token} params.sellToken
+ * @param {Token} params.buyToken
  * @param {BigNumberish} params.sellAmount
  * @param {EthereumAddress} params.fromAddress
  * @param {number} params.slippage
  * @param {boolean} params.refuel
  * @returns {string}
  */
-const buildRainbowCrosschainQuoteUrl = ({
+const buildTidusCrosschainQuoteUrl = ({
   chainId,
   toChainId,
-  sellTokenAddress,
-  buyTokenAddress,
+  sellToken,
+  buyToken,
   sellAmount,
   fromAddress,
-  slippage,
   refuel,
 }: {
   chainId: number;
   toChainId?: number;
-  sellTokenAddress: EthereumAddress;
-  buyTokenAddress: EthereumAddress;
+  sellToken: Token;
+  buyToken: Token;
   sellAmount?: BigNumberish;
   fromAddress: EthereumAddress;
-  slippage: number;
   refuel?: boolean;
 }) => {
   const searchParams = new URLSearchParams({
-    fromAddress,
-    buyToken: buyTokenAddress,
-    sellToken: sellTokenAddress,
+    buyToken: buyToken.contractAddress,
     chainId: String(chainId),
     refuel: String(refuel),
     sellAmount: String(sellAmount),
-    slippage: String(slippage),
+    sellToken: sellToken.contractAddress,
     swapType: SwapType.crossChain,
     toChainId: String(toChainId),
   });
@@ -183,8 +166,8 @@ export const getMinRefuelAmount = async (params: {
  * @param {Source} params.source
  * @param {ChainId} params.chainId
  * @param {EthereumAddress} params.fromAddress
- * @param {EthereumAddress} params.sellTokenAddress
- * @param {EthereumAddress} params.buyTokenAddress
+ * @param {Token} params.sellToken
+ * @param {Token} params.buyToken
  * @param {BigNumberish} params.sellAmount - amount of sellToken to sell (if buyAmount is not provided) - if both are provided, sellAmount will be used - This is the amount that will be swapped, this amount should be provided in its native decimals (e.g. 1 USDC should be 1000000)
  * @param {BigNumberish} params.buyAmount - amount of buyToken to buy (if sellAmount is not provided) - if both are provided, sellAmount will be used
  * @param {number} params.slippage
@@ -198,17 +181,15 @@ export const getQuote = async (
     source,
     chainId = ChainId.mainnet,
     fromAddress,
-    sellTokenAddress,
-    buyTokenAddress,
     sellAmount,
     buyAmount,
-    slippage,
-    feePercentageBasisPoints,
   } = params;
   // When wrapping or unwrapping ETH, the quote is always 1:1
   // so we don't need to call our backend.
-  const sellTokenAddressLowercase = sellTokenAddress.toLowerCase();
-  const buyTokenAddressLowercase = buyTokenAddress.toLowerCase();
+  const sellTokenAddressLowercase =
+    params.sellToken.contractAddress.toLowerCase();
+  const buyTokenAddressLowercase =
+    params.buyToken.contractAddress.toLowerCase();
   const ethAddressLowerCase = ETH_ADDRESS.toLowerCase();
   const wrappedAssetLowercase = WRAPPED_ASSET[chainId]?.toLowerCase();
   const isWrap =
@@ -221,7 +202,7 @@ export const getQuote = async (
   if (isWrap || isUnwrap) {
     return {
       buyAmount: sellAmount || buyAmount,
-      buyTokenAddress,
+      buyTokenAddress: params.buyToken.contractAddress,
       defaultGasLimit: isWrap ? '30000' : '40000',
       fee: BigNumber.from(sellAmount || buyAmount)
         .mul(0.45 / 100)
@@ -235,7 +216,7 @@ export const getQuote = async (
       outputTokenDecimals: 18,
       sellAmount: sellAmount || buyAmount,
       sellAmountMinusFees: sellAmount || buyAmount,
-      sellTokenAddress,
+      sellTokenAddress: params.sellToken.contractAddress,
       formattedBuyAmount: getEtherWithoutDecimals(sellAmount || buyAmount),
       formattedSellAmount: getEtherWithoutDecimals(sellAmount || buyAmount),
       buyAmountInEth: sellAmount || buyAmount,
@@ -247,31 +228,26 @@ export const getQuote = async (
     return null;
   }
 
-  const provider = new InfuraProvider(chainId);
-  const sellToken = new Contract(sellTokenAddress, ERC20_ABI, provider);
-
-  const url = buildRainbowQuoteUrl({
-    fromAddress,
-    buyTokenAddress,
-    sellTokenAddress,
-    chainId,
+  const url = buildTidusQuoteUrl({
     buyAmount,
+    buyTokenAddress: params.buyToken.contractAddress,
+    chainId,
+    fromAddress,
     sellAmount,
-    feePercentageBasisPoints,
-    slippage,
+    sellTokenAddress: params.sellToken.contractAddress,
     source,
   });
 
   const promises = Promise.all([
-    sellToken.decimals(),
     (async () => {
       const response = await axios.get(url);
       const quote = response.data;
       return quote;
     })(),
-  ]) as Promise<[number, any]>;
+  ]) as Promise<any[]>;
 
-  const [sellTokenDecimals, quote] = await promises;
+  const [quote] = await promises;
+  const sellTokenDecimals = params.sellToken.decimals;
 
   if (quote.error) {
     return quote as QuoteError;
@@ -279,11 +255,14 @@ export const getQuote = async (
 
   let result: Quote;
 
-  if (sellTokenAddress === ETH_ADDRESS || sellTokenAddress == MATIC_ADDRESS) {
+  if (
+    params.sellToken.contractAddress === ETH_ADDRESS ||
+    params.sellToken.contractAddress == MATIC_ADDRESS
+  ) {
     result = {
       ...quote,
       feeAmount: await calculateFeeWithDecimals(
-        sellTokenAddress,
+        params.sellToken.contractAddress,
         chainId,
         (quote as Quote).sellAmount,
         sellTokenDecimals,
@@ -292,18 +271,18 @@ export const getQuote = async (
       formattedBuyAmount: await getAmountWithoutDecimals(
         quote.buyAmount,
         undefined,
-        buyTokenAddress,
+        params.buyToken.contractAddress,
         chainId
       ),
       formattedSellAmount: getEtherWithoutDecimals(quote.sellAmount),
     };
   }
 
-  if (buyTokenAddress === ETH_ADDRESS) {
+  if (params.buyToken.contractAddress === ETH_ADDRESS) {
     result = {
       ...quote,
       feeAmount: await calculateFeeWithDecimals(
-        sellTokenAddress,
+        params.sellToken.contractAddress,
         chainId,
         (quote as Quote).sellAmount,
         sellTokenDecimals,
@@ -312,18 +291,21 @@ export const getQuote = async (
       formattedBuyAmount: getEtherWithoutDecimals(quote.buyAmount),
       formattedSellAmount: await getAmountWithoutDecimals(
         quote.sellAmount,
-        undefined,
-        sellTokenAddress,
+        params.sellToken.decimals,
+        params.sellToken.contractAddress,
         chainId
       ),
     };
   }
 
-  if (sellTokenAddress !== ETH_ADDRESS && buyTokenAddress !== ETH_ADDRESS) {
+  if (
+    params.sellToken.contractAddress !== ETH_ADDRESS &&
+    params.buyToken.contractAddress !== ETH_ADDRESS
+  ) {
     result = {
       ...quote,
       feeAmount: await calculateFeeWithDecimals(
-        sellTokenAddress,
+        params.sellToken.contractAddress,
         chainId,
         (quote as Quote).sellAmount,
         sellTokenDecimals,
@@ -331,14 +313,14 @@ export const getQuote = async (
       ),
       formattedBuyAmount: await getAmountWithoutDecimals(
         quote.buyAmount,
-        undefined,
-        buyTokenAddress,
+        params.buyToken.decimals,
+        params.buyToken.contractAddress,
         chainId
       ),
       formattedSellAmount: await getAmountWithoutDecimals(
         quote.sellAmount,
-        undefined,
-        sellTokenAddress,
+        params.sellToken.decimals,
+        params.sellToken.contractAddress,
         chainId
       ),
     };
@@ -354,8 +336,8 @@ export const getQuote = async (
  * @param {ChainId} params.chainId
  * @param {ChainId} params.toChainId
  * @param {EthereumAddress} params.fromAddress
- * @param {EthereumAddress} params.sellTokenAddress
- * @param {EthereumAddress} params.buyTokenAddress
+ * @param {Token} params.sellToken
+ * @param {Token} params.buyToken
  * @param {BigNumberish} params.sellAmount
  * @param {number} params.slippage
  * @param {boolean} params.refuel
@@ -368,10 +350,7 @@ export const getCrosschainQuote = async (
     chainId = ChainId.mainnet,
     toChainId,
     fromAddress,
-    sellTokenAddress,
-    buyTokenAddress,
     sellAmount,
-    slippage,
     refuel = false,
   } = params;
 
@@ -379,14 +358,13 @@ export const getCrosschainQuote = async (
     return null;
   }
 
-  const url = buildRainbowCrosschainQuoteUrl({
-    buyTokenAddress,
+  const url = buildTidusCrosschainQuoteUrl({
+    buyToken: params.buyToken,
     chainId,
     fromAddress,
     refuel,
     sellAmount,
-    sellTokenAddress,
-    slippage,
+    sellToken: params.sellToken,
     toChainId,
   });
 
@@ -444,7 +422,7 @@ export const fillQuote = async (
     (sellTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase() &&
       chainId === ChainId.polygon)
   ) {
-    console.log("Filling Quote ETH to Token")
+    console.log('Filling Quote ETH to Token');
     swapTx = await instance.fillQuoteEthToToken(
       buyTokenAddress,
       to,
@@ -452,7 +430,7 @@ export const fillQuote = async (
       feeAmount,
       {
         ...transactionOptions,
-        value: BigNumber.from(feeAmount).add(value ?? 0),
+        value: BigNumber.from(sellAmount).add(feeAmount ?? 0),
       }
     );
   } else if (
@@ -460,7 +438,7 @@ export const fillQuote = async (
     (buyTokenAddress?.toLowerCase() === MATIC_ADDRESS.toLowerCase() &&
       chainId === ChainId.polygon)
   ) {
-    console.log("Filling Quote Token to ETH");
+    console.log('Filling Quote Token to ETH');
     if (permit) {
       const deadline = await calculateDeadline(wallet as Wallet);
       const permitSignature = await signPermit(
@@ -481,7 +459,7 @@ export const fillQuote = async (
         permitSignature,
         {
           ...transactionOptions,
-          value: BigNumber.from(feeAmount).add(value ?? 0),
+          value: BigNumber.from(sellAmount).add(feeAmount ?? 0),
         }
       );
     } else {
@@ -498,7 +476,7 @@ export const fillQuote = async (
       );
     }
   } else {
-    console.log("Filling Quote Token to Token");
+    console.log('Filling Quote Token to Token');
     if (permit) {
       const deadline = await calculateDeadline(wallet as Wallet);
       const permitSignature = await signPermit(
