@@ -82,15 +82,6 @@ const buildTidusQuoteUrl = ({
     ...(sellAmount
       ? { sellAmount: String(sellAmount) }
       : { buyAmount: String(buyAmount) }),
-    // When buying ETH, we need to tell the aggregator
-    // to return the funds to the contract if we need to take a fee
-    // ...(buyTokenAddress === ETH_ADDRESS
-    //   || buyTokenAddress === MATIC_ADDRESS
-    //   ? { destReceiver: TIDUS_ROUTER_CONTRACT_ADDRESS[chainId as ChainId] }
-    //   : {}),
-    // ...(feePercentageBasisPoints !== undefined
-    //   ? { feePercentageBasisPoints: String(feePercentageBasisPoints) }
-    //   : {}),
   });
   return `${API_BASE_URL}/api/swap/quote?` + searchParams.toString();
 };
