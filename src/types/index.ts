@@ -215,6 +215,7 @@ export interface TransactionOptions {
   gasLimit?: string;
   maxFeePerGas?: string;
   maxPriorityFeePerGas?: string;
+  gasPrice?: string;
   nonce?: string;
   value?: number | BigNumberish;
   from?: EthereumAddress;

@@ -119,14 +119,13 @@ const buildTidusCrosschainQuoteUrl = ({
   const searchParams = new URLSearchParams({
     buyToken: buyToken.contractAddress,
     chainId: String(chainId),
-    fromAddress,
     refuel: String(refuel),
     sellAmount: String(sellAmount),
     sellToken: sellToken.contractAddress,
     swapType: SwapType.crossChain,
     toChainId: String(toChainId),
   });
-  return `${API_BASE_URL}/v1/quote?` + searchParams.toString();
+  return `${API_BASE_URL}/swap/quote?` + searchParams.toString();
 };
 
 /**
@@ -519,7 +518,6 @@ export const fillQuote = async (
   }
   return swapTx;
 };
-
 /**
  * Function that fills a crosschain swap quote onchain via rainbow's swap aggregator smart contract
  *
