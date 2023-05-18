@@ -1,9 +1,7 @@
 import { Signer } from '@ethersproject/abstract-signer';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
-import {
-  StaticJsonRpcProvider,
-} from '@ethersproject/providers';
+import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { Transaction } from '@ethersproject/transactions';
 import { Wallet } from '@ethersproject/wallet';
 import RainbowRouterABI from './abi/RainbowRouter.json';
@@ -37,7 +35,7 @@ import {
   getEtherWithoutDecimals,
   signPermit,
 } from '.';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
 /**
  * Function to get a swap formatted quote url to use with backend
@@ -240,9 +238,13 @@ export const getQuote = async (
 
   const promises = Promise.all([
     (async () => {
-      const response = await axios.get(url);
-      const quote = response.data;
-      return quote;
+      try {
+        const response = await axios.get(url);
+        const quote = response.data;
+        return quote;
+      } catch (error) {
+        throw new Error("Error fetching quote: " + (error as AxiosError).response?.data)
+      }
     })(),
   ]) as Promise<any[]>;
 

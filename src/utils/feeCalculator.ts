@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ChainId } from '../types';
 import { CoingeckoTokenInfoResponse } from '../types/coingeckoTypes';
 import { COINGECKO_TOKEN_INFO_URLS } from './constants';
-import {formatEther, formatUnits, parseEther} from 'ethers'
+import { formatEther, formatUnits, parseEther } from 'ethers';
 
 /**
  * Calculates the fee for a given token and amount
@@ -39,24 +39,28 @@ export async function calculateFeeWithDecimals(
   decimalsOfToken: number,
   amountInEth?: BigNumberish
 ) {
-  const removeDecimals = BigNumber.from(amount)
-    .div(BigNumber.from(10).pow(decimalsOfToken))
-    .toNumber();
-  let tokenValueInNativeToken;
+  try {
+    const removeDecimals = BigNumber.from(amount)
+      .div(BigNumber.from(10).pow(decimalsOfToken))
+      .toNumber();
+    let tokenValueInNativeToken;
 
-  if (!amountInEth) {
-    tokenValueInNativeToken = await getTokenPriceToNativeToken(
-      tokenAddress,
-      chain
-    );
-    tokenValueInNativeToken = tokenValueInNativeToken * removeDecimals;
-  } else {
-    tokenValueInNativeToken = parseFloat(formatEther(amountInEth.toString()));
+    if (!amountInEth) {
+      tokenValueInNativeToken = await getTokenPriceToNativeToken(
+        tokenAddress,
+        chain
+      );
+      tokenValueInNativeToken = tokenValueInNativeToken * removeDecimals;
+    } else {
+      tokenValueInNativeToken = parseFloat(formatEther(amountInEth.toString()));
+    }
+
+    const fee = (0.45 / 100) * tokenValueInNativeToken;
+    const feeInWei = formatUnits(parseEther(fee.toFixed(8)), 'wei');
+    return feeInWei;
+  } catch (error) {
+    throw new Error('calculateFeeWithDecimals Error: ' + error);
   }
-
-  const fee = (0.45 / 100) * tokenValueInNativeToken;
-  const feeInWei = formatUnits(parseEther(fee.toFixed(8)), 'wei');
-  return feeInWei;
 }
 
 /**
