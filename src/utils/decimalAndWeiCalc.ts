@@ -1,9 +1,7 @@
 import ERC20_ABI from '../abi/ERC20.json';
 import {
   Contract,
-  InfuraProvider,
-  parseEther,
-  parseUnits,
+  ethers
 } from 'ethers';
 import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { formatEther, formatUnits } from '@ethersproject/units';
@@ -21,12 +19,12 @@ export async function getAmountInTokenDecimals(
     }
 
     if (!decimals && tokenAddress) {
-      const provider = new InfuraProvider(ChainId);
+      const provider = new ethers.providers.InfuraProvider(ChainId);
       const token = new Contract(tokenAddress, ERC20_ABI, provider);
       decimals = await token.decimals();
     }
 
-    const amountInWei = parseUnits(amount.toString(), decimals ?? 0);
+    const amountInWei = ethers.utils.parseUnits(amount.toString(), decimals ?? 0);
     return amountInWei.toString();
   } catch (error) {
     throw new Error('getAmountInTokenDecimals Error: ' + error);
@@ -34,7 +32,7 @@ export async function getAmountInTokenDecimals(
 }
 
 export function getAmountInEtherDecimals(amount: number) {
-  return parseEther(amount.toString()).toString();
+  return ethers.utils.parseEther(amount.toString()).toString();
 }
 
 export async function getAmountWithoutDecimals(
@@ -49,7 +47,7 @@ export async function getAmountWithoutDecimals(
     }
 
     if (!decimals && tokenAddress) {
-      const provider = new InfuraProvider(chainId);
+      const provider = new ethers.providers.InfuraProvider(chainId);
       const token = new Contract(tokenAddress, ERC20_ABI, provider);
       decimals = await token.decimals();
     }

@@ -15,11 +15,23 @@ npm install git://github.com/michaelessiet/Tidus-Swap-SDK
 This function can is an asynchronous function that returns a quote for a swap. It takes an object as a parameter. E.g:
 
 ```ts
+const sellToken = new Token({
+  contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
+  decimals: 6,
+  chainId: ChainId.MAINNET // If chainId is not specified it will default to Ethereum mainnet
+})
+
+const buyToken = new Token({
+  contractAddress: '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
+  decimals: 18,
+  chainId: ChainId.MAINNET // If chainId is not specified it will default to Ethereum mainnet
+})
+
 const quote = await getQuote({
   chainId: ChainId.MAINNET,
   fromAddress: '0xB576f4Fac19eA8935A4BAA4F7AD5bc566A5845b1',
-  sellTokenAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7',
-  buyTokenAddress: '0x7Fc66500c84A76Ad7e9c93437bFc5Ac33E2DDaE9',
+  sellToken: sellToken,
+  buyToken: buyToken,
   sellAmount: await getAmountInTokenDecimals(100, 6),
   slippage: 0.01,
   swapType: SwapType.normal,

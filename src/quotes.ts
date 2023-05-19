@@ -1,5 +1,4 @@
 import { Signer } from '@ethersproject/abstract-signer';
-import { BigNumber, BigNumberish } from '@ethersproject/bignumber';
 import { Contract } from '@ethersproject/contracts';
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { Transaction } from '@ethersproject/transactions';
@@ -36,6 +35,7 @@ import {
   signPermit,
 } from '.';
 import axios, { AxiosError } from 'axios';
+import { ethers } from 'ethers';
 
 /**
  * Function to get a swap formatted quote url to use with backend
@@ -64,8 +64,8 @@ const buildTidusQuoteUrl = ({
   toChainId?: number;
   sellTokenAddress: EthereumAddress;
   buyTokenAddress: EthereumAddress;
-  buyAmount?: BigNumberish;
-  sellAmount?: BigNumberish;
+  buyAmount?: ethers.BigNumberish;
+  sellAmount?: ethers.BigNumberish;
   fromAddress: EthereumAddress;
   source?: Source;
 }) => {
@@ -110,7 +110,7 @@ const buildTidusCrosschainQuoteUrl = ({
   toChainId?: number;
   sellToken: Token;
   buyToken: Token;
-  sellAmount?: BigNumberish;
+  sellAmount?: ethers.BigNumberish;
   fromAddress: EthereumAddress;
   refuel?: boolean;
 }) => {
@@ -154,7 +154,7 @@ export const getMinRefuelAmount = async (params: {
 
   // We multiply the min amount by 2 as that is what is required according to sockets docs
   // Ref: https://docs.socket.tech/socket-api/v2/guides/refuel-integration#refuel-as-a-middleware
-  return BigNumber.from(destinationChain.minAmount).mul(2).toString();
+  return ethers.BigNumber.from(destinationChain.minAmount).mul(2).toString();
 };
 
 /**
@@ -202,10 +202,10 @@ export const getQuote = async (
       buyAmount: sellAmount || buyAmount,
       buyTokenAddress: params.buyToken.contractAddress,
       defaultGasLimit: isWrap ? '30000' : '40000',
-      fee: BigNumber.from(sellAmount || buyAmount)
+      fee: ethers.BigNumber.from(sellAmount || buyAmount)
         .mul(0.45 / 100)
         .toString(),
-      feeAmount: BigNumber.from(sellAmount || buyAmount)
+      feeAmount: ethers.BigNumber.from(sellAmount || buyAmount)
         .mul(0.45 / 100)
         .toString(),
       feePercentageBasisPoints: 0,
@@ -243,7 +243,9 @@ export const getQuote = async (
         const quote = response.data;
         return quote;
       } catch (error) {
-        throw new Error("Error fetching quote: " + (error as AxiosError).response?.data)
+        throw new Error(
+          'Error fetching quote: ' + (error as AxiosError).response?.data
+        );
       }
     })(),
   ]) as Promise<any[]>;
@@ -378,8 +380,14 @@ export const getCrosschainQuote = async (
   return quote as CrosschainQuote;
 };
 
-const calculateDeadline = async (wallet: Wallet) => {
-  const { timestamp } = await wallet.provider.getBlock('latest');
+const calculateDeadline = async (wallet: ethers.Wallet) => {
+  const block = await wallet.provider?.getBlock('latest');
+  let timestamp;
+  if (block) {
+    timestamp = block.timestamp;
+  } else {
+    throw new Error('Unable to get latest block timestamp');
+  }
   return timestamp + PERMIT_EXPIRATION_TS;
 };
 
@@ -396,11 +404,11 @@ const calculateDeadline = async (wallet: Wallet) => {
 export const fillQuote = async (
   quote: Quote,
   transactionOptions: TransactionOptions,
-  wallet: Signer,
+  wallet: ethers.Wallet,
   permit: boolean,
   chainId: ChainId
 ): Promise<Transaction> => {
-  const instance = new Contract(
+  const instance = new ethers.Contract(
     TIDUS_ROUTER_CONTRACT_ADDRESS[chainId].toString(),
     RainbowRouterABI,
     wallet
@@ -432,7 +440,7 @@ export const fillQuote = async (
       feeAmount,
       {
         ...transactionOptions,
-        value: BigNumber.from(sellAmount).add(feeAmount ?? 0),
+        value: ethers.BigNumber.from(sellAmount).add(feeAmount ?? 0),
       }
     );
   } else if (
@@ -442,12 +450,12 @@ export const fillQuote = async (
   ) {
     console.log('Filling Quote Token to ETH');
     if (permit) {
-      const deadline = await calculateDeadline(wallet as Wallet);
+      const deadline = await calculateDeadline(wallet);
       const permitSignature = await signPermit(
-        wallet as Wallet,
+        wallet,
         sellTokenAddress,
         quote.from,
-        instance.address,
+        TIDUS_ROUTER_CONTRACT_ADDRESS[chainId],
         MAX_INT,
         deadline,
         chainId
@@ -461,7 +469,7 @@ export const fillQuote = async (
         permitSignature,
         {
           ...transactionOptions,
-          value: BigNumber.from(sellAmount).add(feeAmount ?? 0),
+          value: ethers.BigNumber.from(sellAmount).add(feeAmount ?? 0),
         }
       );
     } else {
@@ -473,19 +481,19 @@ export const fillQuote = async (
         feeAmount,
         {
           ...transactionOptions,
-          value: BigNumber.from(feeAmount).add(value ?? 0),
+          value: ethers.BigNumber.from(feeAmount).add(value ?? 0),
         }
       );
     }
   } else {
     console.log('Filling Quote Token to Token');
     if (permit) {
-      const deadline = await calculateDeadline(wallet as Wallet);
+      const deadline = await calculateDeadline(wallet);
       const permitSignature = await signPermit(
-        wallet as Wallet,
+        wallet,
         sellTokenAddress,
         quote.from,
-        instance.address,
+        TIDUS_ROUTER_CONTRACT_ADDRESS[chainId],
         MAX_INT,
         deadline,
         chainId
@@ -500,7 +508,7 @@ export const fillQuote = async (
         permitSignature,
         {
           ...transactionOptions,
-          value: BigNumber.from(feeAmount).add(value ?? 0),
+          value: ethers.BigNumber.from(feeAmount).add(value ?? 0),
         }
       );
     } else {
@@ -513,7 +521,7 @@ export const fillQuote = async (
         sellAmount,
         {
           ...transactionOptions,
-          value: BigNumber.from(feeAmount).add(value ?? 0),
+          value: ethers.BigNumber.from(feeAmount).add(value ?? 0),
         }
       );
     }

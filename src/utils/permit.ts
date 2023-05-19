@@ -13,6 +13,7 @@ import DAIAbi from '../abi/DAI.json';
 import IERC2612Abi from '../abi/IERC2612.json';
 import { ChainId, EthereumAddress } from '../types';
 import * as dotenv from 'dotenv';
+import { ethers } from 'ethers';
 dotenv.config();
 
 const EIP712_DOMAIN_TYPE = [
@@ -95,7 +96,7 @@ const getPermitVersion = async (
   }
 };
 
-const getNonces = async (token: Contract, owner: EthereumAddress) => {
+const getNonces = async (token: ethers.Contract, owner: EthereumAddress) => {
   try {
     const nonce = await token.nonces(owner);
     return nonce;
@@ -132,7 +133,7 @@ const PERMIT_ALLOWED_TYPE = [
 ];
 
 export async function signPermit(
-  wallet: Wallet,
+  wallet: ethers.Wallet,
   tokenAddress: EthereumAddress,
   owner: EthereumAddress,
   spender: EthereumAddress,
@@ -143,7 +144,7 @@ export async function signPermit(
   const isDaiStylePermit =
     tokenAddress.toLowerCase() === DAI[chainId]?.toLowerCase();
 
-  const token = new Contract(
+  const token = new ethers.Contract(
     tokenAddress,
     isDaiStylePermit ? DAIAbi : IERC2612Abi,
     wallet

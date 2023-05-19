@@ -1,4 +1,6 @@
-import { getQuote } from './quotes';
+import { Wallet } from '@ethersproject/wallet';
+import { ethers } from 'ethers';
+import { fillQuote, getQuote } from './quotes';
 import { ChainId, Quote, SwapType } from './types';
 import { ETH_ADDRESS, MATIC_ADDRESS, USDC_ADDRESS } from './utils/constants';
 import { getAmountInTokenDecimals } from './utils/decimalAndWeiCalc';
@@ -36,6 +38,8 @@ import { Token } from './utils/token';
 async function mainPolygon() {
   const startTime = new Date().getTime()
 
+  const wallet = ethers.Wallet.createRandom().connect(new ethers.providers.InfuraProvider())
+
   const buyToken = new Token({
     contractAddress: MATIC_ADDRESS,
     decimals: 18,
@@ -50,7 +54,7 @@ async function mainPolygon() {
     chainId: ChainId.polygon,
     buyToken: buyToken,
     sellToken,
-    fromAddress: '0xB576f4Fac19eA8935A4BAA4F7AD5bc566A5845b1',
+    fromAddress: wallet.address,
     swapType: SwapType.normal,
     buyAmount: await getAmountInTokenDecimals(
       100,
@@ -59,9 +63,13 @@ async function mainPolygon() {
       buyToken.chainId
     ),
   });
+
+
+  const fill = await fillQuote(quote as Quote, {}, wallet, false, sellToken.chainId!)
   const stopTime = new Date().getTime()
 
   console.log('quote', quote);
+  console.log('fill', fill)
   console.log(stopTime - startTime)
 }
 
