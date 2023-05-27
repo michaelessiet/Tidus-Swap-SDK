@@ -2,7 +2,7 @@ import { Signer } from '@ethersproject/abstract-signer';
 import { Contract } from '@ethersproject/contracts';
 import { StaticJsonRpcProvider } from '@ethersproject/providers';
 import { Wallet } from '@ethersproject/wallet';
-import RainbowRouterABI from './abi/RainbowRouter.json';
+import TidusSwapRouterABI from './abi/TidusSwapRouter.json';
 import {
   ChainId,
   CrosschainQuote,
@@ -409,7 +409,7 @@ export const fillQuote = async (
 ): Promise<ethers.providers.TransactionReceipt> => {
   const instance = new ethers.Contract(
     TIDUS_ROUTER_CONTRACT_ADDRESS[chainId].toString(),
-    RainbowRouterABI,
+    TidusSwapRouterABI,
     wallet
   );
   let swapTx;
@@ -561,7 +561,7 @@ export const getQuoteExecutionDetails = (
 ): QuoteExecutionDetails => {
   const instance = new Contract(
     TIDUS_ROUTER_CONTRACT_ADDRESS[provider.network.chainId as ChainId],
-    RainbowRouterABI,
+    TidusSwapRouterABI,
     provider
   );
 
