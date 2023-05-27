@@ -1,4 +1,3 @@
-import { Wallet } from '@ethersproject/wallet';
 import { ethers } from 'ethers';
 import { fillQuote, getQuote } from './quotes';
 import { ChainId, Quote, SwapType } from './types';
